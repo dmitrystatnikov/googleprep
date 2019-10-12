@@ -2,6 +2,7 @@
 
 #include <iterator>
 #include <type_traits>
+#include <vector>
 
 namespace utilities
 {
@@ -99,7 +100,48 @@ void HeapSort (IteratorT first, IteratorT last, CompareT const & compare = Compa
 
 #pragma region Merge Sort
 
+template < typename IteratorT, typename OutIteratorT, typename CompareT = DefaultCompareT<IteratorT> >
+void Merge (IteratorT first1, IteratorT const last1,
+            IteratorT first2, IteratorT const last2,
+            OutIteratorT firstOutput,
+            CompareT const & compare = CompareT ())
+{
+   if (first1 == last1)
+   {
+      std::copy (first2, last2, firstOutput);
+      return;
+   }
 
+   if (first2 == last2)
+   {
+      std::copy (first1, last1, firstOutput);
+      return;
+   }
+
+   IteratorT & current = compare (*first1, *first2) ? first1 : first2;
+
+   *firstOutput++ = *current++;
+
+   Merge (first1, last1, first2, last2, firstOutput, compare);
+}
+
+template < typename IteratorT, typename CompareT = DefaultCompareT<IteratorT> >
+void MergeSort (IteratorT first, IteratorT const last, CompareT const & compare = CompareT ())
+{
+   if (first == last || last == next (first)) return;
+
+   auto size   = std::distance (first, last);
+   auto middle = std::next (first, size / 2);
+
+   MergeSort (first, middle, compare);
+   MergeSort (middle, last, compare);
+
+   std::vector <typename std::iterator_traits<IteratorT>::value_type> tmpContainer;
+
+   tmpContainer.reserve (size);
+
+   Merge (first, middle, middle, last, std::back_inserter (tmpContainer), compare);
+}
 
 #pragma endregion
 }
