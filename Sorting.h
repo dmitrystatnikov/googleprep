@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <iterator>
 #include <type_traits>
 #include <vector>
@@ -100,10 +101,10 @@ void HeapSort (IteratorT first, IteratorT last, CompareT const & compare = Compa
 
 #pragma region Merge Sort
 
-template < typename IteratorT, typename OutIteratorT, typename CompareT = DefaultCompareT<IteratorT> >
+template < typename IteratorT, typename CompareT = DefaultCompareT<IteratorT> >
 void Merge (IteratorT first1, IteratorT const last1,
             IteratorT first2, IteratorT const last2,
-            OutIteratorT firstOutput,
+            IteratorT firstOutput,
             CompareT const & compare = CompareT ())
 {
    if (first1 == last1)
@@ -126,22 +127,47 @@ void Merge (IteratorT first1, IteratorT const last1,
 }
 
 template < typename IteratorT, typename CompareT = DefaultCompareT<IteratorT> >
-void MergeSort (IteratorT first, IteratorT const last, CompareT const & compare = CompareT ())
+void MergeSort (IteratorT first, IteratorT const last, IteratorT firstBuffer, CompareT const & compare = CompareT ())
 {
-   if (first == last || last == next (first)) return;
+   if (first == last || last == std::next (first)) return;
 
    auto size   = std::distance (first, last);
    auto middle = std::next (first, size / 2);
 
-   MergeSort (first, middle, compare);
-   MergeSort (middle, last, compare);
+   auto middleBuffer = std::next (firstBuffer, size / 2);
+   auto lastBuffer   = std::next (firstBuffer, size);
 
-   std::vector <typename std::iterator_traits<IteratorT>::value_type> tmpContainer;
+   MergeSort (first, middle, firstBuffer, compare);
+   MergeSort (middle, last, middleBuffer, compare);
 
-   tmpContainer.reserve (size);
+   Merge (first, middle, middle, last, firstBuffer, compare);
 
-   Merge (first, middle, middle, last, std::back_inserter (tmpContainer), compare);
+   std::copy (firstBuffer, lastBuffer, first);
 }
+
+template < typename IteratorT, typename CompareT = DefaultCompareT<IteratorT> >
+void MergeSort (IteratorT first, IteratorT const last, CompareT const & compare = CompareT ())
+{
+   auto size = std::distance (first, last);
+
+   std::vector <typename std::iterator_traits<IteratorT>::value_type> tmpContainer (size + size % 2);
+
+   auto middle = std::next (first, size / 2);
+   auto tmpMiddle = std::next (tmpContainer.begin (), tmpContainer.size () / 2);
+   auto tmpLast = std::next (tmpContainer.begin(), size);
+
+   std::copy (middle, last, tmpContainer.begin ());
+
+   MergeSort (first, middle, middle, compare);
+   MergeSort (tmpContainer.begin(), tmpMiddle, tmpMiddle, compare);
+
+   std::copy (tmpContainer.begin(), tmpMiddle, middle);
+
+   Merge (first, middle, middle, last, tmpContainer.begin (), compare);
+
+   std::copy (tmpContainer.begin (), tmpLast, first);
+}
+
 
 #pragma endregion
 }
