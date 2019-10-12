@@ -8,7 +8,9 @@ namespace utilities
 
 #pragma region Heap Sort
 
-template < typename IteratorT, typename CompareT = std::less<typename IteratorT::value_type> >
+template <typename IteratorT> using DefaultCompareT = std::less<typename std::iterator_traits<IteratorT>::value_type>;
+
+template < typename IteratorT, typename CompareT = DefaultCompareT<IteratorT> >
 void HeapInsert (IteratorT first, IteratorT inserted, typename std::iterator_traits<IteratorT>::difference_type distanceToInserted, CompareT const & compare = CompareT ())
 {
    if (inserted == first) return;
@@ -24,13 +26,13 @@ void HeapInsert (IteratorT first, IteratorT inserted, typename std::iterator_tra
    HeapInsert (first, parent, distanceToParent, compare);
 }
 
-template < typename IteratorT, typename CompareT = std::less<typename IteratorT::value_type> >
+template < typename IteratorT, typename CompareT = DefaultCompareT<IteratorT> >
 void HeapInsert(IteratorT first, IteratorT inserted, CompareT const & compare = CompareT())
 {
    HeapInsert(first, inserted, std::distance (first, inserted), compare);
 }
 
-template < typename IteratorT, typename CompareT = std::less<typename IteratorT::value_type> >
+template < typename IteratorT, typename CompareT = DefaultCompareT<IteratorT> >
 void HeapMake (IteratorT first, IteratorT last, CompareT const & compare = CompareT ())
 {
    for (auto current = std::make_pair (first, 0); current.first != last; ++current.first, ++current.second)
@@ -39,7 +41,7 @@ void HeapMake (IteratorT first, IteratorT last, CompareT const & compare = Compa
    }
 }
 
-template < typename IteratorT, typename CompareT = std::less<typename IteratorT::value_type> >
+template < typename IteratorT, typename CompareT = DefaultCompareT<IteratorT> >
 void HeapInsertTop (IteratorT first, size_t distToParent, size_t distToEnd, CompareT const & compare = CompareT ())
 {
    if (distToParent >= distToEnd) return;
@@ -71,7 +73,7 @@ void HeapInsertTop (IteratorT first, size_t distToParent, size_t distToEnd, Comp
 }
 
 
-template < typename IteratorT, typename CompareT = std::less<typename IteratorT::value_type> >
+template < typename IteratorT, typename CompareT = DefaultCompareT<IteratorT> >
 IteratorT HeapRemoveTop (IteratorT first, IteratorT last, CompareT const & compare = CompareT ())
 {
    last = std::prev (last);
@@ -84,7 +86,7 @@ IteratorT HeapRemoveTop (IteratorT first, IteratorT last, CompareT const & compa
    return last;
 }
 
-template < typename IteratorT, typename CompareT = std::less<typename IteratorT::value_type> >
+template < typename IteratorT, typename CompareT = DefaultCompareT<IteratorT> >
 void HeapSort (IteratorT first, IteratorT last, CompareT const & compare = CompareT())
 {
    while (first != last)
