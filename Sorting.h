@@ -77,9 +77,9 @@ IteratorT HeapRemoveTop (IteratorT first, IteratorT last, CompareT const & compa
    last = std::prev (last);
    if (first != last)
    {
-      std::swap(*first, *last);
+      std::swap (*first, *last);
 
-      HeapInsertTop(first, 0, std::distance(first, last), compare);
+      HeapInsertTop(first, 0, std::distance (first, last), compare);
    }
    return last;
 }
