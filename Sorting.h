@@ -44,23 +44,22 @@ void HeapMake (IteratorT first, IteratorT last, CompareT const & compare = Compa
 }
 
 template < typename IteratorT, typename CompareT = DefaultCompareT<IteratorT> >
-void HeapInsertTop (IteratorT first, size_t distToParent, size_t distToEnd, CompareT const & compare = CompareT ())
+void HeapInsertTop (IteratorT const first, size_t distToParent, size_t const distToEnd, CompareT const & compare = CompareT ())
 {
    if (distToParent >= distToEnd) return;
 
    auto distToLeftChild = 2 * distToParent + 1;
-
    if (distToLeftChild >= distToEnd) return;
 
    auto parent = std::next (first, distToParent);
-   auto nextParent = std::next(first, distToLeftChild);
+   auto nextParent = std::next (first, distToLeftChild);
    auto distToNextParent = distToLeftChild;
 
    auto distToRightChild = 2 * distToParent + 2;
    if (distToRightChild < distToEnd)
    {
       auto rightChild = std::next (first, distToRightChild);
-      if (compare(*nextParent, *rightChild))
+      if (compare (*nextParent, *rightChild))
       {
          nextParent = rightChild;
          distToNextParent = distToRightChild;
@@ -78,18 +77,19 @@ void HeapInsertTop (IteratorT first, size_t distToParent, size_t distToEnd, Comp
 template < typename IteratorT, typename CompareT = DefaultCompareT<IteratorT> >
 IteratorT HeapRemoveTop (IteratorT first, IteratorT last, CompareT const & compare = CompareT ())
 {
-   last = std::prev (last);
-   if (first != last)
-   {
-      std::swap (*first, *last);
+   if (first == last) return last;
 
-      HeapInsertTop(first, 0, std::distance (first, last), compare);
-   }
-   return last;
+   if (last == std::next (first)) return first;
+
+   std::swap (*first, *last);
+
+   HeapInsertTop (first, 0, std::distance (first, last) - 1, compare);
+
+   return std::prev (last);
 }
 
 template < typename IteratorT, typename CompareT = DefaultCompareT<IteratorT> >
-void HeapSort (IteratorT first, IteratorT last, CompareT const & compare = CompareT())
+void HeapSort (IteratorT first, IteratorT last, CompareT const & compare = CompareT ())
 {
    while (first != last)
    {
