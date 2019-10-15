@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <iterator>
 #include <type_traits>
 #include <vector>
@@ -82,11 +83,13 @@ IteratorT HeapRemoveTop (IteratorT first, IteratorT last, CompareT const & compa
 
    if (last == std::next (first)) return first;
 
+   last = std::prev (last);
+
    std::swap (*first, *last);
 
-   HeapInsertTop (first, 0, std::distance (first, last) - 1, compare);
+   HeapInsertTop (first, 0, std::distance (first, last), compare);
 
-   return std::prev (last);
+   return last;
 }
 
 template < typename IteratorT, typename CompareT = DefaultCompareT<IteratorT> >
@@ -185,16 +188,31 @@ IteratorValueT<IteratorT> MedianOfThree (IteratorT first, IteratorT last, Compar
 
    auto middle = std::next (first, size / 2);
 
-   std::array <IteratorValueT<IteratorT>, 3> choices {*first, *second, *(std::prev (last))};
+   std::array <IteratorValueT<IteratorT>, 3> choices {*first, *middle, *(std::prev (last))};
 
-   if (!compare (choices [0], choices [1])) swap (choices [0], choices [1]);
+   if (!compare (choices [0], choices [1])) std::swap (choices [0], choices [1]);
    if (!compare (choices [1], choices [2]))
    {
-      swap (choices [1], choices [2]);
-      if (!compare (choices [0], choices [1])) swap (choices [0], choices [1]);
+      std::swap (choices [1], choices [2]);
+      if (!compare (choices [0], choices [1])) std::swap (choices [0], choices [1]);
    }
 
    return choices [1];
+}
+
+template < typename IteratorT, typename CompareT = DefaultCompareT<IteratorT> >
+IteratorT MinElement (IteratorT first, IteratorT last, CompareT const & compare = CompareT ())
+{
+   if (first == last) return first;
+
+   auto itResult = first;
+
+   for (++first; first != last; ++first)
+   {
+      if (compare (*(first), *itResult)) itResult = first;
+   }
+
+   return itResult;
 }
 
 template < typename IteratorT, typename CompareT = DefaultCompareT<IteratorT> >
@@ -211,7 +229,7 @@ void QuickSort (IteratorT first, IteratorT const last, CompareT const & compare 
    {
       if (!compare (*itUnder, median))
       {
-         swap (*itUnder, *itAbove);
+         std::swap (*itUnder, *itAbove);
 
          --itAbove;
 
@@ -222,6 +240,13 @@ void QuickSort (IteratorT first, IteratorT const last, CompareT const & compare 
    }
 
    if (compare (*itUnder, median)) ++itUnder;
+
+   if (itUnder == first)
+   {
+      auto itMin = MinElement (first, last, compare);
+      std::swap (*first, *itMin);
+      itUnder = std::next (first);
+   }
 
    QuickSort (first, itUnder, compare);
    QuickSort (itUnder, last, compare);
