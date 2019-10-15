@@ -8,9 +8,10 @@
 namespace utilities
 {
 
-#pragma region Heap Sort
+template <typename IteratorT> using IteratorValueT = typename std::iterator_traits<IteratorT>::value_type;
+template <typename IteratorT> using DefaultCompareT = std::less< IteratorValueT<IteratorT> >;
 
-template <typename IteratorT> using DefaultCompareT = std::less<typename std::iterator_traits<IteratorT>::value_type>;
+#pragma region Heap Sort
 
 template < typename IteratorT, typename CompareT = DefaultCompareT<IteratorT> >
 void HeapInsert (IteratorT first, IteratorT inserted, typename std::iterator_traits<IteratorT>::difference_type distanceToInserted, CompareT const & compare = CompareT ())
@@ -150,7 +151,7 @@ void MergeSort (IteratorT first, IteratorT const last, CompareT const & compare 
 {
    auto size = std::distance (first, last);
 
-   std::vector <typename std::iterator_traits<IteratorT>::value_type> tmpContainer (size + size % 2);
+   std::vector < IteratorValueT<IteratorT> > tmpContainer (size + size % 2);
 
    auto middle = std::next (first, size / 2);
    auto tmpMiddle = std::next (tmpContainer.begin (), tmpContainer.size () / 2);
@@ -166,6 +167,62 @@ void MergeSort (IteratorT first, IteratorT const last, CompareT const & compare 
    Merge (first, middle, middle, last, tmpContainer.begin (), compare);
 
    std::copy (tmpContainer.begin (), tmpLast, first);
+}
+
+
+#pragma endregion
+
+#pragma region Quick Sort
+
+template < typename IteratorT, typename CompareT = DefaultCompareT<IteratorT> >
+IteratorValueT<IteratorT> MedianOfThree (IteratorT first, IteratorT last, CompareT const & compare = CompareT ())
+{
+   auto size = std::distance (first, last);
+
+   if (size == 1) return *first;
+
+   if (size == 2) return std::max (*first, *std::next (first));
+
+   auto middle = std::next (first, size / 2);
+
+   std::array <IteratorValueT<IteratorT>, 3> choices {*first, *second, *(std::prev (last))};
+
+   if (!compare (choices [0], choices [1])) swap (choices [0], choices [1]);
+   if (!compare (choices [1], choices [2]))
+   {
+      swap (choices [1], choices [2]);
+      if (!compare (choices [0], choices [1])) swap (choices [0], choices [1]);
+   }
+
+   return choices [1];
+}
+
+template < typename IteratorT, typename CompareT = DefaultCompareT<IteratorT> >
+void QuickSort (IteratorT first, IteratorT const last, CompareT const & compare = CompareT ())
+{
+   if (first == last || last == std::next (first)) return;
+
+   auto median = MedianOfThree (first, last, compare);
+
+   auto itUnder = first;
+   auto itAbove = std::prev (last);
+
+   while (itUnder != itAbove)
+   {
+      if (!compare (*itUnder, median))
+      {
+         swap (*itUnder, *itAbove);
+
+         --itAbove;
+
+         continue;
+      }
+
+      ++itUnder;
+   }
+
+   QuickSort (first, itUnder, compare);
+   QuickSort (itUnder, last, compare);
 }
 
 
