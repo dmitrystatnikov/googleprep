@@ -221,6 +221,8 @@ void QuickSort (IteratorT first, IteratorT const last, CompareT const & compare 
       ++itUnder;
    }
 
+   if (compare (*itUnder, median)) ++itUnder;
+
    QuickSort (first, itUnder, compare);
    QuickSort (itUnder, last, compare);
 }
