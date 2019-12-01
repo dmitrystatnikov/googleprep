@@ -16,12 +16,15 @@ void SortTest (SortMethodT SortMethod)
 
     SortMethod (Unordered.begin (), Unordered.end ());
 
-    copy (Unordered.begin (), Unordered.end (), itOut);
+    copy (Unordered.begin (), std::prev (Unordered.end ()), itOut);
+    std::cout << Unordered.back () << endl;
 }
 
 int main (int argc, char** argv)
 {
     SortTest ([] (auto first, auto second) { HeapMake (first, second); HeapSort (first, second); });
+    SortTest ([] (auto first, auto second) { MergeSort (first, second); });
+    SortTest ([] (auto first, auto second) { QuickSort (first, second); });
 
     return 0;
 }
