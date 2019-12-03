@@ -26,7 +26,7 @@ public:
    template <typename... ArgsT>
    std::pair<NodeT *, bool> emplace (ArgsT && ... args)
    {
-      auto node    = std::make_unique<NodeT> (std::forward (args)...);
+      auto node    = std::make_unique<NodeT> (std::forward<ArgsT...> (args)...);
 
       auto [parent, child]  = findParentAndNode (*node, i_root);
 
@@ -79,6 +79,9 @@ private:
 
    NodeT * i_root;
 };
+
+template < typename NodeT, typename CompareT >
+CompareT const BinarySearchTree<NodeT, CompareT>::compare = CompareT ();
 
 template < typename NodeT, typename CompareT >
 BinarySearchTree<NodeT, CompareT>::BinarySearchTree ()
@@ -151,8 +154,8 @@ void BinarySearchTree<NodeT, CompareT>::clear ()
 template < typename NodeT, typename CompareT >
 std::tuple<NodeT const *, NodeT const *> BinarySearchTree<NodeT, CompareT>::findParentAndNode (key_type const & key, NodeT const * root) const
 {
-   auto const * parent = nullptr;
-   auto const * child = root;
+   NodeT const * parent = nullptr;
+   NodeT const * child = root;
 
    while (child)
    {
