@@ -32,13 +32,13 @@ public:
 
       if (child)
       {
-         return make_pair (child, false);
+         return std::make_pair (child, false);
       }
 
       if (!parent)
       {
          i_root = node.release   ();
-         return make_pair        (i_root, true);
+         return std::make_pair        (i_root, true);
       }
 
       if (compare (*node, *parent))
@@ -72,7 +72,7 @@ private:
    std::tuple<NodeT *, NodeT *>               findParentAndNode (key_type const & key, NodeT const * root)
    {
       auto [parent, child] = static_cast<const BinarySearchTree<NodeT, CompareT> *>(this)->findParentAndNode (key, root);
-      return make_tuple (const_cast<NodeT *> (parent), const_cast<NodeT*> (child));
+      return std::make_tuple (const_cast<NodeT *> (parent), const_cast<NodeT*> (child));
    }
 
    NodeT const * removeRoot (NodeT const * removedRoot);
@@ -139,6 +139,8 @@ bool BinarySearchTree<NodeT, CompareT>::empty () const noexcept
 template < typename NodeT, typename CompareT >
 void BinarySearchTree<NodeT, CompareT>::clear ()
 {
+   if (!i_root) return;
+
    Self_t leftTree (i_root->leftChild ());
    Self_t rightTree (i_root->rightChild ());
 
@@ -146,6 +148,7 @@ void BinarySearchTree<NodeT, CompareT>::clear ()
    i_root->rightChild (nullptr);
 
    delete i_root;
+   i_root = nullptr;
 
    leftTree.clear ();
    rightTree.clear ();
@@ -182,11 +185,11 @@ std::tuple<NodeT const *, NodeT const *> BinarySearchTree<NodeT, CompareT>::find
 template < typename NodeT, typename CompareT >
 NodeT const * BinarySearchTree<NodeT, CompareT>::removeRoot (NodeT const * replacedRoot)
 {
-   assert(replacedRoot && "removeRoot: Expecting a valid node pointer.");
+   assert (replacedRoot && "removeRoot: Expecting a valid node pointer.");
 
    auto * replacement = replacedRoot->rightChild ();
 
-   if (!replacement) return replacedRoot->leftChild ());
+   if (!replacement) return replacedRoot->leftChild ();
 
    if (!replacement->leftChild ())
    {
@@ -195,7 +198,7 @@ NodeT const * BinarySearchTree<NodeT, CompareT>::removeRoot (NodeT const * repla
    }
 
    auto * replacementParent = replacement;
-   auto * replacement = replacement->leftChild ();
+   replacement = replacement->leftChild ();
    while (replacement->leftChild ())
    {
       replacementParent = replacement;
