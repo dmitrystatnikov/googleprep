@@ -58,6 +58,8 @@ void TreeTest ()
     tree.emplace (14);
     tree.emplace (13);
 
+    tree.traverseInOrder ([](int val) {cout << val << ", ";});
+    cout << endl;
 }
 
 int main (int argc, char** argv)

@@ -59,6 +59,14 @@ public:
 
    void clear ();
 
+   template <typename ProcessorT>
+   void traverseInOrder (ProcessorT processor)
+   {
+      std::stack< std::pair<NodeT *, bool> > path;
+
+      inOrderProcessCurrent (i_root, path, processor); 
+   }
+
 private:
 
    explicit BinarySearchTree (NodeT * root) noexcept
@@ -73,6 +81,39 @@ private:
    {
       auto [parent, child] = static_cast<const BinarySearchTree<NodeT, CompareT> *>(this)->findParentAndNode (key, root);
       return std::make_tuple (const_cast<NodeT *> (parent), const_cast<NodeT*> (child));
+   }
+
+   template <typename ProcessorT>
+   void inOrderProcessCurrent (NodeT * current, std::stack< std::pair<NodeT *, bool> > & path, ProcessorT processor) const
+   {
+      if (!current && path.empty ()) return;
+
+      if (!current)
+      {
+         auto [node, readyForProcess] = path.top ();
+         path.pop ();
+
+         while (readyForProcess)
+         {
+            processor (*node);
+            node = nullptr;
+
+            if (path.empty ()) break;
+
+            std::tie (node, readyForProcess) = path.top ();
+            path.pop ();
+         }
+
+         current = node;
+      }
+
+      if (!current) return;
+
+      if (current->rightChild ()) path.push (std::make_pair (current->rightChild (), false));
+
+      path.push (std::make_pair (current, true));
+
+      inOrderProcessCurrent (current->leftChild (), path, processor);
    }
 
    NodeT const * removeRoot (NodeT const * removedRoot);
