@@ -116,7 +116,7 @@ private:
       inOrderProcessCurrent (current->leftChild (), path, processor);
    }
 
-   NodeT const * removeRoot (NodeT const * removedRoot);
+   NodeT * removeRoot (NodeT * removedRoot);
 
    NodeT * i_root;
 };
@@ -145,18 +145,20 @@ NodeT * BinarySearchTree<NodeT, CompareT>::erase (key_type const & key)
 
    auto replacement = removeRoot (removed);
 
-   if (!parent)
+   if (parent)
    {
-      i_root = replacement;
-   }
-
-   if (parent->leftChild () == removed)
-   {
-      parent->leftChild (replacement);
+      if (parent->leftChild () == removed)
+      {
+         parent->leftChild (replacement);
+      }
+      else
+      {
+         parent->rightChild (replacement);
+      }
    }
    else
    {
-      parent->rightChild (replacement);
+      i_root = replacement;
    }
    
    delete removed;
@@ -224,7 +226,7 @@ std::tuple<NodeT const *, NodeT const *> BinarySearchTree<NodeT, CompareT>::find
 }
 
 template < typename NodeT, typename CompareT >
-NodeT const * BinarySearchTree<NodeT, CompareT>::removeRoot (NodeT const * replacedRoot)
+NodeT * BinarySearchTree<NodeT, CompareT>::removeRoot (NodeT * replacedRoot)
 {
    assert (replacedRoot && "removeRoot: Expecting a valid node pointer.");
 

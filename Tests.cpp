@@ -57,9 +57,29 @@ void TreeTest ()
     tree.emplace (10);
     tree.emplace (14);
     tree.emplace (13);
-
     tree.traverseInOrder ([](int val) {cout << val << ", ";});
     cout << endl;
+
+    tree.erase (10);
+    tree.traverseInOrder ([](int val) {cout << val << ", ";});
+    cout << endl;
+    tree.erase (6);
+    tree.traverseInOrder ([](int val) {cout << val << ", ";});
+    cout << endl;
+    tree.erase (8);
+    tree.traverseInOrder ([](int val) {cout << val << ", ";});
+    cout << endl;
+    tree.erase (8);
+    tree.traverseInOrder ([](int val) {cout << val << ", ";});
+    cout << endl;
+    tree.erase (14);
+    tree.traverseInOrder ([](int val) {cout << val << ", ";});
+    cout << endl;
+
+    cout << tree.find (7) << ", " << tree.find (8) << endl;
+
+    tree.clear ();
+    cout << tree.empty () << endl;
 }
 
 int main (int argc, char** argv)
