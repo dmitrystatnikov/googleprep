@@ -23,49 +23,116 @@ public:
 
    ~BinarySearchTree ();
 
+   class iterator : public std::iterator <std::bidirectional_iterator_tag, NodeT>
+   {
+      using base_t = std::iterator <std::bidirectional_iterator_tag, NodeT>;
+   public:
+
+      using reference = typename base_t::reference;
+      using pointer = typename base_t::pointer;
+
+      iterator () : i_current (nullptr) {};
+
+      iterator (iterator const &)               = default;
+      iterator (iterator &&)                    = default;
+      iterator & operator = (iterator const &)  = default;
+      iterator & operator = (iterator &&)       = default;
+
+      reference         operator * () {return *i_current;}
+
+      pointer           operator ->() {return i_current;}
+
+      iterator & operator ++ ()     {auto nextPtr = rightSubTreeMinimum (); i_current = nextPtr ? nextPtr : leftSubTreeParent (); return *this;}
+      iterator   operator ++ (int)  {auto res = *this; ++(*this); return res;}
+      iterator & operator -- ()     {auto prevPtr = leftSubTreeMaximum (); i_current = prevPtr ? prevPtr : rightSubTreeParent (); return *this;}
+      iterator   operator -- (int)  {auto res = *this; --(*this); return res;}
+
+      bool operator == (iterator const & it) const noexcept {return i_current == it.i_current;}
+      bool operator != (iterator const & it) const noexcept {return i_current != it.i_current;}
+
+   private:
+      friend BinarySearchTree<NodeT, CompareT>;
+
+      iterator (NodeT * current) : i_current (current) {}
+
+      NodeT * get () {return i_current;}
+
+      NodeT * rightSubTreeMinimum ()
+      {
+         if (!i_current) return nullptr;
+         auto nextPtr = i_current->rightChild ();
+         while (nextPtr && nextPtr->leftChild ()) nextPtr = nextPtr->leftChild ();
+         return nextPtr;
+      }
+
+      NodeT * leftSubTreeParent   ()
+      {
+         if (!i_current) return nullptr;
+         auto nextPtr = i_current;
+         while (nextPtr->parent () && nextPtr == nextPtr->parent ()->rightChild ()) nextPtr = nextPtr->parent ();
+         return nextPtr->parent ();
+      }
+
+      NodeT * leftSubTreeMaximum  ()
+      {
+         if (!i_current) return nullptr;
+         auto nextPtr = i_current->leftChild ();
+         while (nextPtr && nextPtr->rightChild ()) nextPtr = nextPtr->rightChild ();
+         return nextPtr;
+      }
+
+      NodeT * rightSubTreeParent  ()
+      {
+         if (!i_current) return nullptr;
+         auto nextPtr = i_current;
+         while (nextPtr->parent () && nextPtr == nextPtr->parent ()->leftChild ()) nextPtr = nextPtr->parent ();
+         return nextPtr->parent ();
+      }
+
+      NodeT * i_current;
+   };
+
    template <typename... ArgsT>
-   std::pair<NodeT *, bool> emplace (ArgsT && ... args)
+   std::pair<iterator, bool> emplace (ArgsT && ... args)
    {
       auto node    = std::make_unique<NodeT> (std::forward<ArgsT...> (args)...);
 
-      auto [parent, child]  = findParentAndNode (*node, i_root);
+      auto child = find (*node);
+      if (child != end ()) return make_pair (child, false);
 
-      if (child)
+      auto parent  = findParent (*node);
+
+      auto current = node.release ();
+
+      if (parent == end ())
       {
-         return std::make_pair (child, false);
+         i_root = current;
+      }
+      else if (compare (*current, *parent))
+      {
+         parent->leftChild (current);
+      }
+      else
+      {
+         assert (compare (*parent, *current) && "Expecting case when parent smaller then inserted node.");
+
+         parent->rightChild (current);
       }
 
-      if (!parent)
-      {
-         i_root = node.release   ();
-         return std::make_pair        (i_root, true);
-      }
-
-      if (compare (*node, *parent))
-      {
-         parent->leftChild (node.release ());
-         return std::make_pair   (parent->leftChild (), true);
-      }
-      
-      parent->rightChild   (node.release ());
-      return std::make_pair      (parent->rightChild (), true);
+      current->parent (parent.get ());
+      return std::make_pair (iterator (current), true);
    }
 
-   NodeT * erase (key_type const & key);
+   iterator erase (iterator it);
 
-   NodeT const * find (key_type const & key) const;
+   iterator find  (key_type const & key) const;
 
    bool empty () const noexcept;
 
    void clear ();
 
-   template <typename ProcessorT>
-   void traverseInOrder (ProcessorT processor)
-   {
-      std::stack< std::pair<NodeT *, bool> > path;
-
-      inOrderProcessCurrent (i_root, path, processor); 
-   }
+   iterator begin () {auto current = i_root; while (current && current->leftChild ()) current = current->leftChild (); return iterator (current);}
+   iterator end   () {return iterator ();}
 
 private:
 
@@ -76,47 +143,11 @@ private:
 
    static const CompareT compare;
 
-   std::tuple<NodeT const *, NodeT const *>   findParentAndNode (key_type const & key, NodeT const * root) const;
-   std::tuple<NodeT *, NodeT *>               findParentAndNode (key_type const & key, NodeT const * root)
+   iterator findParent (key_type const & key) const;
+   iterator findParent (key_type const & key)
    {
-      auto [parent, child] = static_cast<const BinarySearchTree<NodeT, CompareT> *>(this)->findParentAndNode (key, root);
-      return std::make_tuple (const_cast<NodeT *> (parent), const_cast<NodeT*> (child));
+      return static_cast<const BinarySearchTree<NodeT, CompareT> *>(this)->findParent (key);
    }
-
-   template <typename ProcessorT>
-   void inOrderProcessCurrent (NodeT * current, std::stack< std::pair<NodeT *, bool> > & path, ProcessorT processor) const
-   {
-      if (!current && path.empty ()) return;
-
-      if (!current)
-      {
-         auto [node, readyForProcess] = path.top ();
-         path.pop ();
-
-         while (readyForProcess)
-         {
-            processor (*node);
-            node = nullptr;
-
-            if (path.empty ()) break;
-
-            std::tie (node, readyForProcess) = path.top ();
-            path.pop ();
-         }
-
-         current = node;
-      }
-
-      if (!current) return;
-
-      if (current->rightChild ()) path.push (std::make_pair (current->rightChild (), false));
-
-      path.push (std::make_pair (current, true));
-
-      inOrderProcessCurrent (current->leftChild (), path, processor);
-   }
-
-   NodeT * removeRoot (NodeT * removedRoot);
 
    NodeT * i_root;
 };
@@ -137,40 +168,53 @@ BinarySearchTree<NodeT, CompareT>::~BinarySearchTree ()
 }
 
 template < typename NodeT, typename CompareT >
-NodeT * BinarySearchTree<NodeT, CompareT>::erase (key_type const & key)
+typename BinarySearchTree<NodeT, CompareT>::iterator BinarySearchTree<NodeT, CompareT>::erase (iterator it)
 {
-   auto [parent, removed] = findParentAndNode (key, i_root);
+   auto result = end ();
 
-   if (!removed) return nullptr;
+   if (it == end ()) return result;
 
-   auto replacement = removeRoot (removed);
-
-   if (parent)
+   auto replacement = it.leftSubTreeMaximum ();
+   if (!replacement)
    {
-      if (parent->leftChild () == removed)
-      {
-         parent->leftChild (replacement);
-      }
-      else
-      {
-         parent->rightChild (replacement);
-      }
+      replacement = it.rightSubTreeMinimum ();
+      result = it;
    }
-   else
+
+   if (!replacement)
    {
-      i_root = replacement;
+      ++result;
+      if (it->parent ()) it->parent ()->replaceChild (it.get (), nullptr);
+      it->parent (nullptr);
+
+      delete it.get ();
+      return result;
    }
-   
-   delete removed;
-   return replacement;
+
+   it->swap (*replacement);
+
+   auto child = replacement->leftChild () ? replacement->leftChild () : replacement->rightChild ();
+   if (child) child->parent (replacement->parent ());
+
+   replacement->parent ()->replaceChild (replacement, child);
+   replacement->replaceChild (child, nullptr);
+   replacement->parent (nullptr);
+
+   delete replacement;
+
+   return result == end () ? ++it : result;
 }
 
 template < typename NodeT, typename CompareT >
-NodeT const * BinarySearchTree<NodeT, CompareT>::find (key_type const & key) const
+typename BinarySearchTree<NodeT, CompareT>::iterator BinarySearchTree<NodeT, CompareT>::find (key_type const & key) const
 {
-   auto [parent, child] = findParentAndNode (key, i_root);
+   auto current = i_root; 
+   while (current && (compare (*current, key) || compare (key, *current)))
+   {
+      current = compare (*current, key) ? current->rightChild () : current->leftChild ();      
+   }
 
-   return child;
+   return iterator (current);
 }
 
 template < typename NodeT, typename CompareT >
@@ -183,6 +227,9 @@ template < typename NodeT, typename CompareT >
 void BinarySearchTree<NodeT, CompareT>::clear ()
 {
    if (!i_root) return;
+
+   if (i_root->leftChild ()) i_root->leftChild ()->parent (nullptr);
+   if (i_root->rightChild ()) i_root->rightChild ()->parent (nullptr);
 
    Self_t leftTree (i_root->leftChild ());
    Self_t rightTree (i_root->rightChild ());
@@ -198,60 +245,29 @@ void BinarySearchTree<NodeT, CompareT>::clear ()
 }
 
 template < typename NodeT, typename CompareT >
-std::tuple<NodeT const *, NodeT const *> BinarySearchTree<NodeT, CompareT>::findParentAndNode (key_type const & key, NodeT const * root) const
+typename BinarySearchTree<NodeT, CompareT>::iterator BinarySearchTree<NodeT, CompareT>::findParent (key_type const & key) const
 {
-   NodeT const * parent = nullptr;
-   NodeT const * child = root;
-
-   while (child)
+   auto current = i_root; 
+   while (current)
    {
-      if (compare (key, *child))
+      if (compare (*current, key) && current->rightChild ())
       {
-         parent = child;
-         child = parent->leftChild ();
+         current = current->rightChild ();
          continue;
-      }
-
-      if (compare (*child, key))
+      } 
+           
+      if (compare (key, *current) && current->leftChild ())
       {
-         parent = child;
-         child = parent->rightChild ();
+         current = current->leftChild ();
          continue;
-      }
+      }  
 
-      break;
+      break;    
    }
 
-   return std::make_tuple (parent, child);
-}
+   if (current && current == i_root && !(compare (*current, key) || compare (key, *current))) current = nullptr;
 
-template < typename NodeT, typename CompareT >
-NodeT * BinarySearchTree<NodeT, CompareT>::removeRoot (NodeT * replacedRoot)
-{
-   assert (replacedRoot && "removeRoot: Expecting a valid node pointer.");
-
-   auto * replacement = replacedRoot->rightChild ();
-
-   if (!replacement) return replacedRoot->leftChild ();
-
-   if (!replacement->leftChild ())
-   {
-      replacement->leftChild (replacedRoot->leftChild ());
-      return replacement;
-   }
-
-   auto * replacementParent = replacement;
-   replacement = replacement->leftChild ();
-   while (replacement->leftChild ())
-   {
-      replacementParent = replacement;
-      replacement = replacement->leftChild ();
-   }
-   replacementParent->leftChild (replacement->rightChild ());
-   replacement->leftChild (replacedRoot->leftChild ());
-   replacement->rightChild (replacedRoot->rightChild ());
-
-   return replacement;
+   return iterator (current);
 }
 
 }
