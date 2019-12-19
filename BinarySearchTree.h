@@ -19,7 +19,7 @@ public:
 
    using key_type = typename NodeT::key_type;
 
-   BinarySearchTree  ();
+   BinarySearchTree  () noexcept;
 
    ~BinarySearchTree ();
 
@@ -40,12 +40,12 @@ public:
 
       reference         operator * () {return *i_current;}
 
-      pointer           operator ->() {return i_current;}
+      pointer           operator ->() noexcept {return i_current;}
 
-      iterator & operator ++ ()     {auto nextPtr = rightSubTreeMinimum (); i_current = nextPtr ? nextPtr : leftSubTreeParent (); return *this;}
-      iterator   operator ++ (int)  {auto res = *this; ++(*this); return res;}
-      iterator & operator -- ()     {auto prevPtr = leftSubTreeMaximum (); i_current = prevPtr ? prevPtr : rightSubTreeParent (); return *this;}
-      iterator   operator -- (int)  {auto res = *this; --(*this); return res;}
+      iterator & operator ++ ()    noexcept {auto nextPtr = rightSubTreeMinimum (); i_current = nextPtr ? nextPtr : leftSubTreeParent (); return *this;}
+      iterator   operator ++ (int) noexcept {auto res = *this; ++(*this); return res;}
+      iterator & operator -- ()    noexcept {auto prevPtr = leftSubTreeMaximum (); i_current = prevPtr ? prevPtr : rightSubTreeParent (); return *this;}
+      iterator   operator -- (int) noexcept {auto res = *this; --(*this); return res;}
 
       bool operator == (iterator const & it) const noexcept {return i_current == it.i_current;}
       bool operator != (iterator const & it) const noexcept {return i_current != it.i_current;}
@@ -53,11 +53,11 @@ public:
    private:
       friend BinarySearchTree<NodeT, CompareT>;
 
-      iterator (NodeT * current) : i_current (current) {}
+      explicit iterator (NodeT * current) noexcept : i_current (current) {}
 
-      NodeT * get () {return i_current;}
+      NodeT * get () noexcept {return i_current;}
 
-      NodeT * rightSubTreeMinimum ()
+      NodeT * rightSubTreeMinimum () noexcept
       {
          if (!i_current) return nullptr;
          auto nextPtr = i_current->rightChild ();
@@ -65,7 +65,7 @@ public:
          return nextPtr;
       }
 
-      NodeT * leftSubTreeParent   ()
+      NodeT * leftSubTreeParent   () noexcept
       {
          if (!i_current) return nullptr;
          auto nextPtr = i_current;
@@ -73,7 +73,7 @@ public:
          return nextPtr->parent ();
       }
 
-      NodeT * leftSubTreeMaximum  ()
+      NodeT * leftSubTreeMaximum  () noexcept
       {
          if (!i_current) return nullptr;
          auto nextPtr = i_current->leftChild ();
@@ -81,7 +81,7 @@ public:
          return nextPtr;
       }
 
-      NodeT * rightSubTreeParent  ()
+      NodeT * rightSubTreeParent  () noexcept
       {
          if (!i_current) return nullptr;
          auto nextPtr = i_current;
@@ -123,16 +123,16 @@ public:
       return std::make_pair (iterator (current), true);
    }
 
-   iterator erase (iterator it);
+   iterator erase (iterator it) noexcept;
 
-   iterator find  (key_type const & key) const;
+   iterator find  (key_type const & key) const noexcept;
 
    bool empty () const noexcept;
 
    void clear ();
 
-   iterator begin () {auto current = i_root; while (current && current->leftChild ()) current = current->leftChild (); return iterator (current);}
-   iterator end   () {return iterator ();}
+   iterator begin () noexcept {auto current = i_root; while (current && current->leftChild ()) current = current->leftChild (); return iterator (current);}
+   iterator end   () noexcept {return iterator ();}
 
 private:
 
@@ -143,8 +143,8 @@ private:
 
    static const CompareT compare;
 
-   iterator findParent (key_type const & key) const;
-   iterator findParent (key_type const & key)
+   iterator findParent (key_type const & key) const noexcept;
+   iterator findParent (key_type const & key) noexcept
    {
       return static_cast<const BinarySearchTree<NodeT, CompareT> *>(this)->findParent (key);
    }
@@ -156,7 +156,7 @@ template < typename NodeT, typename CompareT >
 CompareT const BinarySearchTree<NodeT, CompareT>::compare = CompareT ();
 
 template < typename NodeT, typename CompareT >
-BinarySearchTree<NodeT, CompareT>::BinarySearchTree ()
+BinarySearchTree<NodeT, CompareT>::BinarySearchTree () noexcept
 : i_root {nullptr}
 {
 }
@@ -168,7 +168,7 @@ BinarySearchTree<NodeT, CompareT>::~BinarySearchTree ()
 }
 
 template < typename NodeT, typename CompareT >
-typename BinarySearchTree<NodeT, CompareT>::iterator BinarySearchTree<NodeT, CompareT>::erase (iterator it)
+typename BinarySearchTree<NodeT, CompareT>::iterator BinarySearchTree<NodeT, CompareT>::erase (iterator it) noexcept
 {
    auto result = end ();
 
@@ -206,7 +206,7 @@ typename BinarySearchTree<NodeT, CompareT>::iterator BinarySearchTree<NodeT, Com
 }
 
 template < typename NodeT, typename CompareT >
-typename BinarySearchTree<NodeT, CompareT>::iterator BinarySearchTree<NodeT, CompareT>::find (key_type const & key) const
+typename BinarySearchTree<NodeT, CompareT>::iterator BinarySearchTree<NodeT, CompareT>::find (key_type const & key) const noexcept
 {
    auto current = i_root; 
    while (current && (compare (*current, key) || compare (key, *current)))
@@ -245,7 +245,7 @@ void BinarySearchTree<NodeT, CompareT>::clear ()
 }
 
 template < typename NodeT, typename CompareT >
-typename BinarySearchTree<NodeT, CompareT>::iterator BinarySearchTree<NodeT, CompareT>::findParent (key_type const & key) const
+typename BinarySearchTree<NodeT, CompareT>::iterator BinarySearchTree<NodeT, CompareT>::findParent (key_type const & key) const noexcept
 {
    auto current = i_root; 
    while (current)

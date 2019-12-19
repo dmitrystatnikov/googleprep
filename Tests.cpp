@@ -48,7 +48,7 @@ void TreeTest ()
             return;
         }
 
-        void swap (Node & other)
+        void swap (Node & other) noexcept
         {
             std::swap (i_payload, other.i_payload);
         }
