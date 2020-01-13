@@ -23,65 +23,14 @@ void SortTest (SortMethodT SortMethod)
 
 void TreeTest ()
 {
-    struct Node
-    {
-    public:
-        using key_type = int;
+    BinarySearchTree<int> tree {8, 3, 1, 6, 4, 7, 10, 14, 13};
 
-        explicit Node (key_type payloadArg) : i_leftChild (nullptr), i_rightChild (nullptr), i_parent (nullptr), i_payload (payloadArg) {}
-
-        Node const *    leftChild   () const noexcept               {return i_leftChild;}
-        void            leftChild   (Node * leftChildArg) noexcept  {i_leftChild = leftChildArg;}
-        Node const *    rightChild  () const noexcept               {return i_rightChild;}
-        void            rightChild  (Node * rightChildArg) noexcept {i_rightChild = rightChildArg;}
-        Node const *    parent      () const noexcept               {return i_parent;}
-        void            parent      (Node * parentArg) noexcept     {i_parent = parentArg;}
-
-        void            replaceChild (Node * replaced, Node * replacement) noexcept
-        {
-            if (replaced != i_leftChild && replaced != i_rightChild) return;
-
-            auto & child = replaced == i_leftChild ? i_leftChild : i_rightChild;
-
-            child = replacement;
-
-            return;
-        }
-
-        void swap (Node & other) noexcept
-        {
-            std::swap (i_payload, other.i_payload);
-        }
-
-        operator key_type () const noexcept {return i_payload;}
-    private:
-        friend BinarySearchTree<Node>;
-
-        Node *    leftChild   () noexcept {return const_cast<Node *> (const_cast<Node const *> (this)->leftChild ());}
-        Node *    rightChild  () noexcept {return const_cast<Node *> (const_cast<Node const *> (this)->rightChild ());}
-        Node *    parent      () noexcept {return const_cast<Node *> (const_cast<Node const *> (this)->parent ());}
-
-        Node *      i_leftChild;
-        Node *      i_rightChild;
-        Node *      i_parent;
-        key_type    i_payload;
-    };
-
-    BinarySearchTree<Node> tree;
-    tree.emplace (8);
-    tree.emplace (3);
-    tree.emplace (1);
-    tree.emplace (6);
-    tree.emplace (4);
-    tree.emplace (7);
-    tree.emplace (10);
-    tree.emplace (14);
-    tree.emplace (13);
+    auto it = tree.begin ();
 
     for (auto N : tree) cout << N << " ";
     cout << endl; 
 
-    auto it = tree.find (10);
+    it = tree.find (10);
     cout << *it << endl;
 
     it = tree.erase (it);
